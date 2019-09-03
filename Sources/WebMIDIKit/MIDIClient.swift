@@ -16,16 +16,48 @@ internal extension Notification.Name {
 /// Kind of like a session, context or handle, it doesn't really do anything
 /// besides being passed around. Also dispatches notifications.
 internal final class MIDIClient : Equatable, Comparable, Hashable {
-    let ref: MIDIClientRef
+    var ref: MIDIClientRef = 0
+    var outPort: MIDIPortRef = 0
+    var inPort: MIDIPortRef = 0
+    
+    private var sources: [MIDIEndpointRef] = []
+    private var destinations: [MIDIEndpointRef] = []
 
     internal init() {
-        ref = MIDIClientCreate {
-            NotificationCenter.default.post(name: .MIDISetupNotification, object: $0)
-        }
+        OSAssert(MIDIClientCreate("WebMIDIKit" as CFString, myMIDINotifyProc, nil, &ref))
+//        OSAssert(MIDIOutputPortCreate(ref, "WebMIDIKitOutPort" as CFString, &outPort))
+//        OSAssert(MIDIInputPortCreate(ref, "WebMIDIKitInPort" as CFString, readIncomingMIDI, nil, &inPort))
+        
+        getSourcesAndDestinations()
+        print(sources)
+        print(destinations)
+        
+        connectSources()
     }
 
     deinit {
         OSAssert(MIDIClientDispose(ref))
+    }
+    
+    func getSourcesAndDestinations() {
+        for i in 0..<MIDIGetNumberOfDestinations() {
+            let endpoint = MIDIGetDestination(i)
+            if endpoint != 0 {
+                destinations.append(endpoint)
+            }
+        }
+        for i in 0..<MIDIGetNumberOfSources() {
+            let endpoint = MIDIGetSource(i)
+            if endpoint != 0 {
+                sources.append(endpoint)
+            }
+        }
+    }
+    
+    func connectSources() {
+        for (i, _) in sources.enumerated() {
+            MIDIPortConnectSource(inPort, sources[i], &sources[i])
+        }
     }
 
     var hashValue: Int {
@@ -41,12 +73,14 @@ internal final class MIDIClient : Equatable, Comparable, Hashable {
     }
 }
 
-/// called when an endpoint is added or removed
-@inline(__always) fileprivate
-func MIDIClientCreate(callback: @escaping (MIDIObjectAddRemoveNotification) -> ()) -> MIDIClientRef {
-    var ref = MIDIClientRef()
-    OSAssert(MIDIClientCreateWithBlock("WebMIDIKit" as CFString, &ref) {
-        _ = MIDIObjectAddRemoveNotification(ptr: $0).map(callback)
+fileprivate func readIncomingMIDI(pktList: UnsafePointer<MIDIPacketList>, readProcRefCon: UnsafeMutableRawPointer?, srcConnRefCon: UnsafeMutableRawPointer?) {
+//    print(pktList.pointee)
+}
+
+fileprivate func myMIDINotifyProc(_ notification: UnsafePointer<MIDINotification>, _ refCon: UnsafeMutableRawPointer?) {
+    print(notification.pointee)
+    _ = MIDIObjectAddRemoveNotification(ptr: notification).map({
+        print($0.description)
+        NotificationCenter.default.post(name: .MIDISetupNotification, object: $0)
     })
-    return ref
 }
