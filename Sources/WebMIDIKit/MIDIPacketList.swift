@@ -6,21 +6,21 @@
 //
 //
 
-import AVFoundation
+import CoreMIDI
 
 extension MIDIPacketList {
     /// this needs to be mutating since we are potentionally changint the timestamp
     /// we cannot make a copy since that woulnd't copy the whole list
     internal mutating func send(to output: MIDIOutput, offset: Double? = nil) {
 
-        _ = offset.map {
-
-            let current = AudioGetCurrentHostTime()
-            let _offset = AudioConvertNanosToHostTime(UInt64($0 * 1000000))
-
-            let ts = current + _offset
-            packet.timeStamp = ts
-        }
+//        _ = offset.map {
+//
+//            let current = AudioGetCurrentHostTime()
+//            let _offset = AudioConvertNanosToHostTime(UInt64($0 * 1000000))
+//
+//            let ts = current + _offset
+//            packet.timeStamp = ts
+//        }
 
         OSAssert(MIDISend(output.ref, output.endpoint.ref, &self))
         /// this let's us propagate the events to everyone subscribed to this
