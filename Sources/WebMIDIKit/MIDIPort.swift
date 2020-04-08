@@ -10,7 +10,7 @@ import CoreMIDI
 
 /// This interface represents a MIDI input or output port.
 /// See [spec](https://www.w3.org/TR/webmidi/#midiport-interface)
-public class MIDIPort : Equatable, Comparable, Hashable, CustomStringConvertible {
+public class MIDIPort : Encodable {
 
     /// A unique ID of the port. This can be used by developers to remember ports
     /// the user has chosen for their application. This is maintained across
@@ -98,6 +98,37 @@ public class MIDIPort : Equatable, Comparable, Hashable, CustomStringConvertible
         onStateChange = nil
     }
 
+    public private(set) final var ref: MIDIPortRef
+
+    internal private(set) final weak var client: MIDIClient!
+    internal final let endpoint: MIDIEndpoint
+
+    internal init(client: MIDIClient, endpoint: MIDIEndpoint) {
+        self.client = client
+        self.endpoint = endpoint
+        self.ref = 0
+    }
+    
+    // MARK: Encodable
+    
+    private enum CodingKeys : CodingKey {
+        case id, manufacturer, name, type, version, connection, state
+    }
+    
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(manufacturer, forKey: .manufacturer)
+        try container.encode(name, forKey: .name)
+        try container.encode(type, forKey: .type)
+        try container.encode(version, forKey: .version)
+        try container.encode(connection, forKey: .connection)
+        try container.encode(state, forKey: .state)
+    }
+}
+
+extension MIDIPort : Equatable, Comparable, Hashable {
+
     public static func ==(lhs: MIDIPort, rhs: MIDIPort) -> Bool {
         return lhs.endpoint == rhs.endpoint
     }
@@ -109,55 +140,13 @@ public class MIDIPort : Equatable, Comparable, Hashable, CustomStringConvertible
     public final var hashValue: Int {
         return endpoint.hashValue
     }
-
-    public final var description: String {
-        return "MIDIPort: \(type), \(name) by \(manufacturer), connection: \(connection) (id: \(id))"
-    }
-
-//    public func encode(to encoder: Encoder) throws {
-//        fatalError()
-//    }
-//
-//    public required init(from decoder: Decoder) throws {
-//        fatalError()
-//    }
-
-    internal private(set) final var ref: MIDIPortRef
-
-    internal private(set) final weak var client: MIDIClient!
-    internal final let endpoint: MIDIEndpoint
-
-    internal init(client: MIDIClient, endpoint: MIDIEndpoint) {
-        self.client = client
-        self.endpoint = endpoint
-        self.ref = 0
-    }
 }
 
-//func sequence(first: UnsafePointer<MIDIPacketList>) -> AnyIterator<MIDIEvent> {
-//    var ptr = first
-//    let count = Int(first.pointee.numPackets)
-//
-//    return AnyIterator {
-//        nil
-//    }
-//    fatalError()
-////    return sequence(first: first) { _ in
-//////        UnsafePointer($0)
-////        fatalError()
-////    }.prefix(count)
-//}
-////
-////@inline(__always) fileprivate
-////func MIDIInputPortCreate(ref: MIDIClientRef, readmidi: @escaping (MIDIEvent) -> ()) -> MIDIPortRef {
-////    var port = MIDIPortRef()
-////    OSAssert(MIDIInputPortCreateWithBlock(ref, "MIDI input" as CFString, &port) {
-////        lst, srcconref in
-////        sequence(first: lst).forEach(readmidi)
-////    })
-////    return port
-////}
-
+extension MIDIPort : CustomStringConvertible {
+    public var description: String {
+        return "MIDIPort: \(type), \(name) by \(manufacturer), connection: \(connection) (id: \(id))"
+    }
+}
 
 
 @inline(__always) fileprivate
