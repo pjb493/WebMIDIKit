@@ -74,7 +74,7 @@ extension Data {
     }
 }
 
-extension MIDIEvent {
+extension MIDIMessageEvent {
     @inline(__always)
     fileprivate init(packet p: inout MIDIPacket) {
         timestamp = p.timeStamp
@@ -83,7 +83,7 @@ extension MIDIEvent {
 }
 
 extension MIDIPacketList: Sequence {
-    public typealias Element = MIDIEvent
+    public typealias Element = MIDIMessageEvent
 
     public func makeIterator() -> AnyIterator<Element> {
         var p: MIDIPacket = packet

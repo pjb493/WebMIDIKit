@@ -6,20 +6,25 @@
 //
 //
 
-import AVFoundation
+import CoreMIDI
 
-public struct MIDIEvent : Equatable {
-    let timestamp : MIDITimeStamp
-    let data : Data
+protocol MIDIEvent: Equatable, Encodable {}
 
-    public static func ==(lhs: MIDIEvent, rhs: MIDIEvent) -> Bool {
-        return lhs.timestamp == rhs.timestamp && lhs.data == rhs.data
-    }
-
+public struct MIDIConnectionEvent : MIDIEvent {
+    let port: MIDIPort
     
+    public init(port: MIDIPort) {
+        self.port = port
+    }
+}
 
-//    internal init(_ ptr: UnsafePointer<MIDIPacket>) {
-//        self.timestamp = ptr.pointee.timeStamp
-//        self.data = Data(bytes: ptr, count: Int(ptr.pointee.length))
-//    }
+public struct MIDIMessageEvent : MIDIEvent {
+    public let timestamp : MIDITimeStamp
+    public let data : Data
+}
+
+extension MIDIMessageEvent : CustomStringConvertible {
+    public var description: String {
+        return "\(timestamp): \(data.hexString)"
+    }
 }
