@@ -15,7 +15,7 @@ internal extension Notification.Name {
 
 /// Kind of like a session, context or handle, it doesn't really do anything
 /// besides being passed around. Also dispatches notifications.
-internal final class MIDIClient : Equatable, Comparable, Hashable {
+internal final class MIDIClient {
     var ref: MIDIClientRef = 0
     var outPort: MIDIPortRef = 0
     var inPort: MIDIPortRef = 0
@@ -24,13 +24,16 @@ internal final class MIDIClient : Equatable, Comparable, Hashable {
     private var destinations: [MIDIEndpointRef] = []
 
     internal init() {
-        OSAssert(MIDIClientCreate("WebMIDIKit" as CFString, myMIDINotifyProc, nil, &ref))
+        OSAssert(MIDIClientCreateWithBlock("WebMIDIKit" as CFString, &ref) {
+            print($0.pointee)
+            _ = MIDIObjectAddRemoveNotification($0).map({
+                NotificationCenter.default.post(name: .MIDISetupNotification, object: $0)
+            })
+        })
 //        OSAssert(MIDIOutputPortCreate(ref, "WebMIDIKitOutPort" as CFString, &outPort))
 //        OSAssert(MIDIInputPortCreate(ref, "WebMIDIKitInPort" as CFString, readIncomingMIDI, nil, &inPort))
         
         getSourcesAndDestinations()
-        print(sources)
-        print(destinations)
         
         connectSources()
     }
@@ -59,7 +62,9 @@ internal final class MIDIClient : Equatable, Comparable, Hashable {
             MIDIPortConnectSource(inPort, sources[i], &sources[i])
         }
     }
+}
 
+extension MIDIClient: Equatable, Comparable, Hashable {
     var hashValue: Int {
         return ref.hashValue
     }
@@ -78,9 +83,5 @@ fileprivate func readIncomingMIDI(pktList: UnsafePointer<MIDIPacketList>, readPr
 }
 
 fileprivate func myMIDINotifyProc(_ notification: UnsafePointer<MIDINotification>, _ refCon: UnsafeMutableRawPointer?) {
-    print(notification.pointee)
-    _ = MIDIObjectAddRemoveNotification(ptr: notification).map({
-        print($0.description)
-        NotificationCenter.default.post(name: .MIDISetupNotification, object: $0)
-    })
+    
 }

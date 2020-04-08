@@ -23,3 +23,23 @@ public struct MIDIEvent : Equatable {
 //        self.data = Data(bytes: ptr, count: Int(ptr.pointee.length))
 //    }
 }
+
+extension MIDIEvent: CustomStringConvertible {
+    public var description: String {
+        return "\(timestamp): \(data.hexString)"
+    }
+}
+
+extension UInt8 {
+    var hexString: String {
+        return String(format: "%02x", UInt(self)).capitalized
+    }
+}
+
+extension Collection where Element == UInt8 {
+    var hexString: String {
+        return self
+            .map { $0.hexString }
+            .joined(separator: " ")
+    }
+}

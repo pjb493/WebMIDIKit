@@ -8,13 +8,8 @@
 
 import AudioToolbox
 
-extension MIDIObjectAddRemoveNotification : CustomStringConvertible {
-
-    public var description: String {
-        return "message\(messageID)"
-    }
-
-    internal init?(ptr: UnsafePointer<MIDINotification>) {
+extension MIDIObjectAddRemoveNotification {
+    internal init?(_ ptr: UnsafePointer<MIDINotification>) {
         switch ptr.pointee.messageID {
         case .msgObjectAdded, .msgObjectRemoved:
             self = UnsafeRawPointer(ptr).assumingMemoryBound(to: MIDIObjectAddRemoveNotification.self).pointee
@@ -23,12 +18,6 @@ extension MIDIObjectAddRemoveNotification : CustomStringConvertible {
         }
     }
 }
-
-//@inline(__always) internal
-//func AudioGetCurrentMIDITimeStamp(offset: Double = 0) -> MIDITimeStamp {
-//    let _offset = AudioConvertNanosToHostTime(UInt64(offset * 1000000))
-//    return AudioGetCurrentHostTime() + _offset
-//}
 
 @inline(__always) internal
 func OSAssert(_ err: OSStatus, function: String = #function) {
