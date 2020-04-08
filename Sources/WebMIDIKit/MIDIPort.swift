@@ -161,7 +161,7 @@ public class MIDIPort : Equatable, Comparable, Hashable, CustomStringConvertible
 
 
 @inline(__always) fileprivate
-func MIDIInputPortCreate(ref: MIDIClientRef, readmidi: @escaping (MIDIEvent) -> ()) -> MIDIPortRef {
+func MIDIInputPortCreate(ref: MIDIClientRef, readmidi: @escaping (MIDIMessageEvent) -> ()) -> MIDIPortRef {
     var port = MIDIPortRef()
     OSAssert(MIDIInputPortCreateWithBlock(ref, "MIDI input" as CFString, &port) {
         lst, srcconref in
